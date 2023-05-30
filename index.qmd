@@ -1,0 +1,145 @@
+---
+title: "Calidad del café"
+format:
+  html:
+    toc: true
+    lang: es
+    theme: minty
+---
+
+## Introducción
+
+El presente pretende utilizar archivo de datos de 206 muestras de café que realizo Fatih Boyar para , mediante graficos de dispersion, cuartiles e hitorgramas, encontrar y realcionar datos caracteristiosd e cada cafe con su puntaje total, para de esta manera determinar si factores como, la altitud o el color afectan en la calidad del cafe, se hizo huso de bibliotecas como ggplotly, dplyr, sf, DT y readr para la fabricacion de estos graficos.
+
+## Carga de bibiliotcas y paquetes.
+
+```{r}
+#| label:  carga-biblioteca
+#| warning: false
+#| message: false
+#| code-fold: false
+
+library(tidyverse)
+library(DT)
+library(plotly)
+library(gapminder)
+library(ggplot2) 
+library(ggthemes)
+library(sf)
+library(dplyr)
+library(readr)
+```
+
+## Tabla de datos
+
+```{r}
+#| label: tabla de datos
+#| warning: false
+#| message: false
+#| code-fold: true
+
+coffee_quality <-
+  read_delim(
+    file = "coffee-quality.csv",
+    col_select = c(
+      "Country_of_Origin",
+      "Variety",
+      "Color",
+      "Altitude",
+      "Total_Cup_Points",
+    )
+  )
+
+coffee_quality |>
+ datatable(
+     options = list(
+      pageLength = 5,
+      language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
+    )
+ )
+```
+
+## Distribucion del puntaje total
+
+```{r}
+#| label: histograma-puntaje-total
+#| warning: false
+#| message: false
+#| code-fold: true
+
+Histograma_TCP <- 
+  coffee_quality |>
+  ggplot(aes(x = Total_Cup_Points)) +
+  geom_histogram(
+    aes(
+      text = paste0(
+        "Total de puntos: ", round(after_stat(x), 2), "\n",
+        "Frecuencia: ", after_stat(count)
+      ),
+        y = after_stat(density) 
+    ), 
+    bins = 10
+  ) + 
+  geom_density() +
+  scale_y_continuous(labels = scales::label_comma()) +
+  ggtitle("Distribucion de total de puntos") +
+  xlab("Total de Puntos") +
+  ylab("Frecuencia") +
+  labs(subtitle = "Datos de coffee quality", caption = "Fuente:  https://github.com/fatih-boyar/coffee-quality-data-CQI.") +
+theme_dark()
+
+ggplotly(Histograma_TCP, tooltip = "text") |> 
+  config(locale = 'es')
+```
+
+## Grafico de dispersion entre altitud y puntaje total.
+
+```{r}
+#| label: Altitud_vs_Puntaje_Total
+#| warning: false
+#| message: false
+#| code-fold: true
+
+grafico_TCP_vs_ALT <-
+  coffee_quality |>
+  ggplot(aes(x = Altitude, y = Total_Cup_Points)) +
+  geom_point(aes(
+    text = paste0( 
+      "Altitud: ", Altitude,  "\n",
+      "Total de Puntos: ", Total_Cup_Points
+    )
+  )) +
+  geom_smooth() +
+  ggtitle("Altitud vs Total de puntos") +
+  xlab("Altitud (mtsnm)") +
+  ylab("Puntaje Total") +
+  labs(subtitle = "Datos de Coffee Quality por Fatih Boyar",
+       caption = "Fuente: https://github.com/fatih-boyar/coffee-quality-data-CQI.",
+       color = "Total de Puntos") +
+ theme_dark()
+
+ggplotly(grafico_TCP_vs_ALT, tooltip = "text") |> 
+  config(locale = 'es')
+```
+
+## Estadisticas para el puntaje total por color.
+
+```{r}
+#| label: Puntaje-total-por-color
+#| warning: false
+#| message: false
+#| code-fold: true
+
+caja_TCP_COL <-
+coffee_quality |>
+  ggplot(aes(x = Color, y = Total_Cup_Points)) +
+  geom_boxplot() +
+  ggtitle("Distribución del puntaje total por color") +
+  ylab("Puntaje Total") +
+  labs(subtitle = "Datos de Coffee Quality por Fatih Boyar", caption = "Fuente: https://github.com/fatih-boyar/coffee-quality-data-CQI.") +
+  theme_dark()
+
+# Gráfico de caja plotly
+ggplotly(caja_TCP_COL) |> 
+  config(locale = 'es')
+```
